@@ -5,9 +5,9 @@ Track Overall Equipment Effectiveness across CNC machines and shifts.
 ## Setup
 
 ```bash
-python -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
+uv venv
+source .venv/bin/activate
+uv pip install -e .
 ```
 
 ## Database
@@ -19,7 +19,7 @@ alembic upgrade head
 ## Usage
 
 ```bash
-python -m oee_tracker.cli --help
+oee-tracker --help
 ```
 
 ## OEE Formula
