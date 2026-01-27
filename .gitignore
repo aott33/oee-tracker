@@ -205,3 +205,22 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Alembic
+alembic.ini
+# If you are using a template for alembic.ini, ignore the generated file.
+# Keep the template in version control, e.g., alembic.ini.tmpl
+
+# Databases
+*.sqlite
+*.sqlite3
+test.db*
+
+# Python
+*.pyc
+__pycache__/
+venv/
+.venv/
+
+# Environment variables
+.env
