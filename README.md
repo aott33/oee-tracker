@@ -21,12 +21,6 @@ alembic upgrade head
 Name: machines
 Columns: id, name, ideal_cycle_time, location
 
-Name: production_runs
-Columns: id, machine_id, shift_id, operator_id, planned_start_time, planned_end_time, actual_start_time, actual_end_time, state, good_parts, rejected_parts
-
-Name: downtime_events
-Columns: id, production_run_id, reason_code, start_time, end_time
-
 Name: reason_codes
 Columns: code, is_planned, description
 
@@ -35,6 +29,12 @@ Columns: id, name
 
 Name: operators
 Columns: id, name
+
+Name: production_runs
+Columns: id, machine_id, shift_id, operator_id, planned_start_time, planned_end_time, actual_start_time, actual_end_time, good_parts, rejected_parts
+
+Name: downtime_events
+Columns: id, production_run_id, reason_code, start_time, end_time
 
 ## Usage
 
