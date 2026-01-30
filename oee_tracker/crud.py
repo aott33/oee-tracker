@@ -5,7 +5,7 @@ CRUD operations and queries for OEE Tracker.
 from datetime import datetime
 from sqlalchemy import (
     select,
-    update,
+    func,
 )
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import (
@@ -384,9 +384,10 @@ def create_production_run(
     try:
         session.add(production_run)
         session.commit()
+        return production_run
     except IntegrityError:
         session.rollback()
-        print("Error: Shift already exists")
+        print("Error: Production Run already exists")
         return None
     except SQLAlchemyError as e:
         session.rollback()
@@ -399,7 +400,6 @@ def get_production_run(session: Session, run_id: int) -> ProductionRun | None:
         production_run = session.get(ProductionRun, run_id)
         return production_run
     except SQLAlchemyError as e:
-        session.rollback()
         print(f"Database error: {e}")
         return None
 
@@ -410,7 +410,6 @@ def get_all_production_runs(session: Session) -> list[ProductionRun]:
         production_runs = session.scalars(select(ProductionRun))
         return list(production_runs)
     except SQLAlchemyError as e:
-        session.rollback()
         print(f"Database error: {e}")
         return []
 
@@ -422,7 +421,24 @@ def get_production_runs_by_machine(
     end_date: datetime | None = None,
 ) -> list[ProductionRun]:
     """Get production runs for a machine, optionally filtered by date range."""
-    pass
+    try:
+        statement = select(ProductionRun).where(ProductionRun.machine_id == machine_id)
+
+        if start_date is not None:
+            statement = statement.where(
+                ProductionRun.actual_start_time >= start_date
+            )
+        if end_date is not None:
+            statement = statement.where(
+                ProductionRun.actual_end_time <= end_date
+            )
+            
+        production_runs = session.scalars(statement)
+        return list(production_runs)
+    
+    except SQLAlchemyError as e:
+        print(f"Database error: {e}")
+        return []
 
 
 def get_production_runs_by_shift(
@@ -432,17 +448,51 @@ def get_production_runs_by_shift(
     end_date: datetime | None = None,
 ) -> list[ProductionRun]:
     """Get production runs for a shift, optionally filtered by date range."""
-    pass
+    try:
+        statement = select(ProductionRun).where(ProductionRun.shift_id == shift_id)
+
+        if start_date is not None:
+            statement = statement.where(
+                ProductionRun.actual_start_time >= start_date
+            )
+        if end_date is not None:
+            statement = statement.where(
+                ProductionRun.actual_end_time <= end_date
+            )
+
+        production_runs = session.scalars(statement)
+        return list(production_runs)
+    except SQLAlchemyError as e:
+        print(f"Database error: {e}")
+        return []
 
 
 def get_active_production_runs(session: Session) -> list[ProductionRun]:
     """Get all currently running production runs (started but not ended)."""
-    pass
+    try:
+        statement = select(ProductionRun).where(
+            ProductionRun.actual_start_time != None,
+            ProductionRun.actual_end_time == None
+        )
+        production_runs = session.scalars(statement)
+        return list(production_runs)
+    except SQLAlchemyError as e:
+        print(f"Database error: {e}")
+        return []
 
 
 def start_run(session: Session, run_id: int) -> ProductionRun | None:
     """Start a production run. Sets actual_start_time to now. Returns None if not found."""
-    pass
+    try:
+        production_run = session.get(ProductionRun, run_id)
+        if production_run:
+            production_run.actual_start_time = func.now()
+            session.commit()
+        return production_run
+    except SQLAlchemyError as e:
+        session.rollback()
+        print(f"Database error: {e}")
+        return None
 
 
 def stop_run(
@@ -452,7 +502,18 @@ def stop_run(
     rejected_parts_count: int,
 ) -> ProductionRun | None:
     """Stop a production run. Sets actual_end_time to now and part counts. Returns None if not found."""
-    pass
+    try:
+        production_run = session.get(ProductionRun, run_id)
+        if production_run:
+            production_run.actual_end_time = func.now()
+            production_run.good_parts_count = good_parts_count
+            production_run.rejected_parts_count = rejected_parts_count
+            session.commit()
+        return production_run
+    except SQLAlchemyError as e:
+        session.rollback()
+        print(f"Database error: {e}")
+        return None
 
 
 def update_production_run(
@@ -462,12 +523,35 @@ def update_production_run(
     rejected_parts_count: int | None = None,
 ) -> ProductionRun | None:
     """Update part counts on a production run. Returns None if not found."""
-    pass
+    try:
+        production_run = session.get(ProductionRun, run_id)
+        if production_run:
+            if good_parts_count is not None:
+                production_run.good_parts_count = good_parts_count
+            if rejected_parts_count is not None:
+                production_run.rejected_parts_count = rejected_parts_count
+            session.commit()
+        return production_run
+    except SQLAlchemyError as e:
+        session.rollback()
+        print(f"Database error: {e}")
+        return None
 
 
 def delete_production_run(session: Session, run_id: int, is_admin: bool = False) -> bool:
     """Delete a production run. Returns True if deleted, False if not found or unauthorized."""
-    pass
+    try:
+        production_run = session.get(ProductionRun, run_id)
+        if production_run:
+            session.delete(production_run)
+            session.commit()
+            return True
+        else:
+            return False
+    except SQLAlchemyError as e:
+        session.rollback()
+        print(f"Database error: {e}")
+        return False
 
 
 # ============================================================
@@ -478,45 +562,95 @@ def create_downtime_event(
     session: Session,
     production_run_id: int,
     reason_code: str,
-    start_time: datetime,
+    start_time: datetime | None = None,
     end_time: datetime | None = None,
-) -> DowntimeEvent:
+) -> DowntimeEvent | None:
     """Create a downtime event with explicit times."""
-    pass
+    downtime_event = DowntimeEvent(
+        production_run_id=production_run_id,
+        reason_code=reason_code,
+    )
+
+    if start_time is not None:
+        downtime_event.start_time=start_time
+    else:
+        downtime_event.start_time=func.now()
+
+    if end_time is not None:
+        downtime_event.end_time=end_time
+
+    try:
+        session.add(downtime_event)
+        session.commit()
+        return downtime_event
+    except SQLAlchemyError as e:
+        session.rollback()
+        print(f"Database error: {e}")
+        return None
 
 
 def get_downtime_event(session: Session, event_id: int) -> DowntimeEvent | None:
     """Get a downtime event by ID."""
-    pass
+    try:
+        downtime_event = session.get(DowntimeEvent, event_id)
+        return downtime_event
+    except SQLAlchemyError as e:
+        print(f"Database error: {e}")
+        return None
 
 
 def get_downtime_events_by_run(session: Session, run_id: int) -> list[DowntimeEvent]:
     """Get all downtime events for a production run."""
-    pass
+    try:
+        statement = select(DowntimeEvent).where(DowntimeEvent.production_run_id == run_id)
+        downtime_events = session.scalars(statement)
+        return list(downtime_events)
+    except SQLAlchemyError as e:
+        print(f"Database error: {e}")
+        return []
 
 
 def get_active_downtime_events(session: Session) -> list[DowntimeEvent]:
     """Get all currently active downtime events (started but not ended)."""
-    pass
-
-
-def start_downtime(
-    session: Session,
-    production_run_id: int,
-    reason_code: str,
-) -> DowntimeEvent:
-    """Start a downtime event. Sets start_time to now."""
-    pass
-
+    try:
+        statement = select(DowntimeEvent).where(
+            DowntimeEvent.start_time != None,
+            DowntimeEvent.end_time == None
+        )
+        downtime_events = session.scalars(statement)
+        return list(downtime_events)
+    except SQLAlchemyError as e:
+        print(f"Database error: {e}")
+        return []      
 
 def stop_downtime(session: Session, event_id: int) -> DowntimeEvent | None:
     """Stop a downtime event. Sets end_time to now. Returns None if not found."""
-    pass
+    try:
+        downtime_event = session.get(DowntimeEvent, event_id)
+        if downtime_event:
+            downtime_event.end_time = func.now()
+            session.commit()
+        return downtime_event
+    except SQLAlchemyError as e:
+        session.rollback()
+        print(f"Database error: {e}")
+        return None
 
 
 def delete_downtime_event(session: Session, event_id: int, is_admin: bool = False) -> bool:
     """Delete a downtime event. Returns True if deleted, False if not found or unauthorized."""
-    pass
+    try:
+        downtime_event = session.get(DowntimeEvent, event_id)
+        if downtime_event:
+            session.delete(downtime_event)
+            session.commit()
+            return True
+        else:
+            return False
+    except SQLAlchemyError as e:
+        session.rollback()
+        print(f"Database error: {e}")
+        return False
 
 
 # ============================================================
@@ -532,7 +666,32 @@ def calculate_availability(
     Availability = Run Time / Planned Production Time
     Returns None if run not found or incomplete.
     """
-    pass
+    production_run = get_production_run(session, run_id)
+    
+    if production_run is None:
+        return None
+    
+    # Need actual times to calculate run time
+    if production_run.actual_start_time is None or production_run.actual_end_time is None:
+        return None
+    
+    # Calculate times
+    planned_time = (production_run.planned_end_time - production_run.planned_start_time).total_seconds()
+    actual_run_time = (production_run.actual_end_time - production_run.actual_start_time).total_seconds()
+    
+    # Subtract downtime
+    downtime_events = get_downtime_events_by_run(session, run_id)
+    total_downtime = 0
+    for event in downtime_events:
+        if event.start_time is not None and event.end_time is not None:
+            total_downtime += (event.end_time - event.start_time).total_seconds()
+    
+    run_time = actual_run_time - total_downtime
+    
+    if planned_time == 0:
+        return None
+    
+    return run_time / planned_time
 
 
 def calculate_performance(
