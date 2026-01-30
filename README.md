@@ -116,3 +116,11 @@ oee-tracker --help
 - **Performance** = (Ideal Cycle Time × Total Parts) / Run Time
 - **Quality** = Good Parts / Total Parts
 - **OEE** = Availability × Performance × Quality
+
+## TODO
+
+| Description | File | Function |
+|-------------|------|----------|
+| Add unique constraint on machine name | `oee_tracker/models.py` | `Machine` |
+| Create migration for unique constraint | `migrations/versions/` | `alembic revision` |
+| Handle IntegrityError for duplicate name on update | `oee_tracker/crud.py` | `update_machine` |

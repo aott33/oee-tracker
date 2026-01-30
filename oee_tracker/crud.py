@@ -3,7 +3,17 @@ CRUD operations and queries for OEE Tracker.
 """
 
 from datetime import datetime
+from sqlalchemy import (
+    select,
+    update,
+)
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import (
+    IntegrityError,
+    SQLAlchemyError,
+    OperationalError,
+    DataError,
+) 
 
 from oee_tracker.models import (
     Machine,
@@ -24,20 +34,41 @@ def create_machine(
     name: str,
     ideal_cycle_time: float,
     location: str | None = None,
-) -> Machine:
+) -> Machine | None:
     """Create a new machine."""
-    pass
+    machine = Machine(name=name, ideal_cycle_time=ideal_cycle_time, location=location)
+    try:
+        session.add(machine)
+        session.commit()
+        return machine
+    except IntegrityError:
+        session.rollback()
+        print("Error: Machine already exists")
+        return None
+    except SQLAlchemyError as e:
+        session.rollback()
+        print(f"Database error: {e}")
+        return None
 
 
 def get_machine(session: Session, machine_id: int) -> Machine | None:
     """Get a machine by ID."""
-    pass
+    try:
+        machine = session.get(Machine, machine_id)
+        return machine
+    except SQLAlchemyError as e:
+        print(f"Database error: {e}")
+        return None
 
 
 def get_all_machines(session: Session) -> list[Machine]:
     """Get all machines."""
-    pass
-
+    try:
+        machines = session.scalars(select(Machine))
+        return list(machines)
+    except SQLAlchemyError as e:
+        print(f"Database error: {e}")
+        return []
 
 def update_machine(
     session: Session,
@@ -47,7 +78,23 @@ def update_machine(
     location: str | None = None,
 ) -> Machine | None:
     """Update a machine. Returns None if not found."""
-    pass
+    try:
+        machine = session.get(Machine, machine_id)
+        if machine:
+            if name is not None:
+                machine.name = name
+            if ideal_cycle_time is not None:
+                machine.ideal_cycle_time = ideal_cycle_time
+            if location is not None:
+                machine.location = location
+            session.commit()
+            
+        return machine
+    except SQLAlchemyError as e:
+        session.rollback()
+        print(f"Database error: {e}")
+        return None
+        
 
 
 def delete_machine(session: Session, machine_id: int, is_admin: bool = False) -> bool:
