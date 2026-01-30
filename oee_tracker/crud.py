@@ -691,7 +691,9 @@ def calculate_availability(
     if planned_time == 0:
         return None
     
-    return run_time / planned_time
+    availablity = run_time / planned_time
+
+    return availablity
 
 
 def calculate_performance(
