@@ -20,8 +20,8 @@ flowchart TD
 
     subgraph Migrations["3. Migrations"]
         G --> H[uv run alembic upgrade head]
-        H --> I[Alembic reads models.py]
-        I --> J[Base.metadata defines tables]
+        H --> I[Alembic runs migration scripts]
+        I --> J[migrations/versions/*.py executed]
         J --> K[Tables created in PostgreSQL]
     end
 
