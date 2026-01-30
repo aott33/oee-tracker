@@ -88,76 +88,169 @@ def update_machine(
             if location is not None:
                 machine.location = location
             session.commit()
-            
+
         return machine
     except SQLAlchemyError as e:
         session.rollback()
         print(f"Database error: {e}")
         return None
-        
-
 
 def delete_machine(session: Session, machine_id: int, is_admin: bool = False) -> bool:
     """Delete a machine. Returns True if deleted, False if not found or unauthorized."""
-    pass
+    try:
+        machine = session.get(Machine, machine_id)
+        if machine:
+            session.delete(machine)
+            session.commit()
+            return True
+        else:
+            return False
+    except SQLAlchemyError as e:
+        session.rollback()
+        print(f"Database error: {e}")
+        return False
 
 
 # ============================================================
 # SHIFTS
 # ============================================================
 
-def create_shift(session: Session, name: str) -> Shift:
+def create_shift(session: Session, name: str) -> Shift | None:
     """Create a new shift."""
-    pass
+    shift = Shift(name=name)
+    try:
+        session.add(shift)
+        session.commit()
+        return shift
+    except IntegrityError:
+        session.rollback()
+        print("Error: Shift already exists")
+        return None
+    except SQLAlchemyError as e:
+        session.rollback()
+        print(f"Database error: {e}")
+        return None
 
 
 def get_shift(session: Session, shift_id: int) -> Shift | None:
     """Get a shift by ID."""
-    pass
+    try:
+        shift = session.get(Shift, shift_id)
+        return shift
+    except SQLAlchemyError as e:
+        print(f"Database error: {e}")
+        return None
 
 
 def get_all_shifts(session: Session) -> list[Shift]:
     """Get all shifts."""
-    pass
+    try:
+        shifts = session.scalars(select(Shift))
+        return list(shifts)
+    except SQLAlchemyError as e:
+        print(f"Database error: {e}")
+        return []
 
 
 def update_shift(session: Session, shift_id: int, name: str) -> Shift | None:
     """Update a shift. Returns None if not found."""
-    pass
+    try:
+        shift = session.get(Shift, shift_id)
+        if shift is not None:
+            shift.name = name
+            session.commit()
+        return shift
+    except SQLAlchemyError as e:
+        session.rollback()
+        print(f"Database error: {e}")
+        return None
 
 
 def delete_shift(session: Session, shift_id: int, is_admin: bool = False) -> bool:
     """Delete a shift. Returns True if deleted, False if not found or unauthorized."""
-    pass
+    try:
+        shift = session.get(Shift, shift_id)
+        if shift is not None:
+            session.delete(shift)
+            session.commit()
+            return True
+        else:
+            return False
+    except SQLAlchemyError as e:
+        session.rollback()
+        print(f"Database error: {e}")
+        return False
 
 
 # ============================================================
 # OPERATORS
 # ============================================================
 
-def create_operator(session: Session, name: str) -> Operator:
+def create_operator(session: Session, name: str) -> Operator | None:
     """Create a new operator."""
-    pass
+    operator = Operator(name=name)
+    try:
+        session.add(operator)
+        session.commit()
+        return operator
+    except IntegrityError:
+        session.rollback()
+        print("Error: Operator already exists")
+        return None
+    except SQLAlchemyError as e:
+        session.rollback()
+        print(f"Database error: {e}")
+        return None
 
 
 def get_operator(session: Session, operator_id: int) -> Operator | None:
     """Get an operator by ID."""
-    pass
+    try:
+        operator = session.get(Operator, operator_id)
+        return operator
+    except SQLAlchemyError as e:
+        print(f"Database error: {e}")
+        return None
 
 
 def get_all_operators(session: Session) -> list[Operator]:
     """Get all operators."""
-    pass
+    try:
+        operators = session.scalars(select(Operator))
+        return list(operators)
+    except SQLAlchemyError as e:
+        print(f"Database error: {e}")
+        return []
 
 
 def update_operator(session: Session, operator_id: int, name: str) -> Operator | None:
     """Update an operator. Returns None if not found."""
-    pass
+    try:
+        operator = session.get(Operator, operator_id)
+        if operator is not None:
+            operator.name = name
+            session.commit()
+        return operator
+    except SQLAlchemyError as e:
+        session.rollback()
+        print(f"Database error: {e}")
+        return None
 
 
 def delete_operator(session: Session, operator_id: int, is_admin: bool = False) -> bool:
     """Delete an operator. Returns True if deleted, False if not found or unauthorized."""
-    pass
+    try:
+        operator = session.get(Operator, operator_id)
+        if operator is not None:
+            session.delete(operator)
+            session.commit()
+            return True
+        else:
+            return False
+    except SQLAlchemyError as e:
+        session.rollback()
+        print(f"Database error: {e}")
+        return False
 
 
 # ============================================================
@@ -169,29 +262,65 @@ def create_reason_code(
     code: str,
     description: str,
     is_planned: bool = False,
-) -> ReasonCode:
+) -> ReasonCode | None:
     """Create a new reason code."""
-    pass
+    reason_code = ReasonCode(code=code, description=description, is_planned=is_planned)
+    try:
+        session.add(reason_code)
+        session.commit()
+        return reason_code
+    except IntegrityError:
+        session.rollback()
+        print("Error: Reason code already exists")
+        return None
+    except SQLAlchemyError as e:
+        session.rollback()
+        print(f"Database error: {e}")
+        return None
 
 
 def get_reason_code(session: Session, code: str) -> ReasonCode | None:
     """Get a reason code by code."""
-    pass
+    try:
+        reason_code = session.get(ReasonCode, code)
+        return reason_code
+    except SQLAlchemyError as e:
+        print(f"Database error: {e}")
+        return None
 
 
 def get_all_reason_codes(session: Session) -> list[ReasonCode]:
     """Get all reason codes."""
-    pass
+    try:
+        reason_codes = session.scalars(select(ReasonCode))
+        return list(reason_codes)
+    except SQLAlchemyError as e:
+        print(f"Database error: {e}")
+        return []
 
 
 def get_planned_reason_codes(session: Session) -> list[ReasonCode]:
     """Get all planned reason codes."""
-    pass
+    try:
+        reason_codes = session.scalars(
+            select(ReasonCode).where(ReasonCode.is_planned == True)
+        )
+        return list(reason_codes)
+    except SQLAlchemyError as e:
+        print(f"Database error: {e}")
+        return []
 
 
 def get_unplanned_reason_codes(session: Session) -> list[ReasonCode]:
     """Get all unplanned reason codes."""
-    pass
+    try:
+        reason_codes = session.scalars(
+            select(ReasonCode).where(ReasonCode.is_planned == False)
+        )
+        return list(reason_codes)
+    except SQLAlchemyError as e:
+        print(f"Database error: {e}")
+        return []
 
 
 def update_reason_code(
@@ -201,12 +330,35 @@ def update_reason_code(
     is_planned: bool | None = None,
 ) -> ReasonCode | None:
     """Update a reason code. Returns None if not found."""
-    pass
+    try:
+        reason_code = session.get(ReasonCode, code)
+        if reason_code is not None:
+            if description is not None:
+                reason_code.description = description
+            if is_planned is not None:
+                reason_code.is_planned = is_planned
+            session.commit()
+        return reason_code
+    except SQLAlchemyError as e:
+        session.rollback()
+        print(f"Database error: {e}")
+        return None
 
 
 def delete_reason_code(session: Session, code: str, is_admin: bool = False) -> bool:
     """Delete a reason code. Returns True if deleted, False if not found or unauthorized."""
-    pass
+    try:
+        reason_code = session.get(ReasonCode, code)
+        if reason_code is not None:
+            session.delete(reason_code)
+            session.commit()
+            return True
+        else:
+            return False
+    except SQLAlchemyError as e:
+        session.rollback()
+        print(f"Database error: {e}")
+        return False
 
 
 # ============================================================
@@ -220,19 +372,47 @@ def create_production_run(
     operator_id: int,
     planned_start_time: datetime,
     planned_end_time: datetime,
-) -> ProductionRun:
+) -> ProductionRun | None:
     """Create a new production run (scheduled, not yet started)."""
-    pass
-
+    production_run = ProductionRun(
+        machine_id=machine_id,
+        shift_id=shift_id,
+        operator_id=operator_id,
+        planned_start_time=planned_start_time,
+        planned_end_time=planned_end_time
+    )
+    try:
+        session.add(production_run)
+        session.commit()
+    except IntegrityError:
+        session.rollback()
+        print("Error: Shift already exists")
+        return None
+    except SQLAlchemyError as e:
+        session.rollback()
+        print(f"Database error: {e}")
+        return None
 
 def get_production_run(session: Session, run_id: int) -> ProductionRun | None:
     """Get a production run by ID."""
-    pass
+    try:
+        production_run = session.get(ProductionRun, run_id)
+        return production_run
+    except SQLAlchemyError as e:
+        session.rollback()
+        print(f"Database error: {e}")
+        return None
 
 
 def get_all_production_runs(session: Session) -> list[ProductionRun]:
     """Get all production runs."""
-    pass
+    try:
+        production_runs = session.scalars(select(ProductionRun))
+        return list(production_runs)
+    except SQLAlchemyError as e:
+        session.rollback()
+        print(f"Database error: {e}")
+        return []
 
 
 def get_production_runs_by_machine(

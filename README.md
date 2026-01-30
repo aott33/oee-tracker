@@ -124,3 +124,6 @@ oee-tracker --help
 | Add unique constraint on machine name | `oee_tracker/models.py` | `Machine` |
 | Create migration for unique constraint | `migrations/versions/` | `alembic revision` |
 | Handle IntegrityError for duplicate name on update | `oee_tracker/crud.py` | `update_machine` |
+| Add is_admin column to operators | `oee_tracker/models.py` | `Operator` |
+| Create migration for is_admin column | `migrations/versions/` | `alembic revision` |
+| Implement is_admin check in delete_machine | `oee_tracker/crud.py` | `delete_machine` |
