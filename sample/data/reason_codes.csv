@@ -1,0 +1,13 @@
+code,is_planned,description
+SETUP,true,Tool changeover/setup
+BREAK,true,Scheduled break
+PM,true,Planned maintenance
+TOOL_BREAK,false,Tool breakage
+MATERIAL,false,Material shortage
+PROGRAM,false,Program error
+HYDRAULIC,false,Hydraulic failure
+SPINDLE,false,Spindle issue
+COOLANT,false,Coolant system failure
+OPERATOR,false,Operator unavailable
+QUALITY,false,Quality hold/inspection
+ELECTRICAL,false,Electrical fault

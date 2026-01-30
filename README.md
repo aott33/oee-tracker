@@ -2,19 +2,87 @@
 
 Track Overall Equipment Effectiveness across CNC machines and shifts.
 
+## Architecture
+
+```mermaid
+flowchart TD
+    subgraph Startup["1. Startup"]
+        A[uv sync] --> B[Install Dependencies]
+        B --> C[docker compose up -d]
+        C --> D[PostgreSQL Container Running]
+    end
+
+    subgraph Database["2. Database Setup"]
+        D --> E[db.py loads .env]
+        E --> F[create_engine connects to PostgreSQL]
+        F --> G[SessionLocal factory created]
+    end
+
+    subgraph Migrations["3. Migrations"]
+        G --> H[uv run alembic upgrade head]
+        H --> I[Alembic reads models.py]
+        I --> J[Base.metadata defines tables]
+        J --> K[Tables created in PostgreSQL]
+    end
+
+    subgraph SampleData["4. Load Sample Data"]
+        K --> L[uv run load-sample]
+        L --> M[sample/load.py executes]
+        M --> N[get_session from db.py]
+        N --> O[Read CSV files]
+        O --> P[Create model instances]
+        P --> Q[session.add + commit]
+        Q --> R[Data in PostgreSQL]
+    end
+
+    subgraph CLI["5. Run CLI"]
+        R --> S[uv run oee-tracker]
+        S --> T[cli.py main executes]
+        T --> U["CLI for OEE Tracker<br/>(Not yet implemented)"]
+    end
+
+    subgraph Models["models.py (ORM Layer)"]
+        Machine
+        Shift
+        Operator
+        ReasonCode
+        ProductionRun
+        DowntimeEvent
+    end
+
+    subgraph CRUD["crud.py (Business Logic)"]
+        CreateOps[Create Operations]
+        ReadOps[Read/Query Operations]
+        UpdateOps[Update Operations]
+        DeleteOps[Delete Operations]
+        OEECalc[OEE Calculations]
+    end
+
+    U -.->|will use| CRUD
+    CRUD --> Models
+    Models --> G
+```
+
 ## Setup
 
 ```bash
-uv venv
-source .venv/bin/activate
-uv pip install -e .
+# 1. Install dependencies
+uv sync
+
+# 2. Start PostgreSQL (via Docker)
+docker compose up -d
+
+# 3. Run migrations
+uv run alembic upgrade head
+
+# 4. Load sample data (optional)
+uv run load-sample
+
+# 5. Start CLI
+uv run oee-tracker
 ```
 
 ## Database
-
-```bash
-alembic upgrade head
-```
 
 ### Tables:
 

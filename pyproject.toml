@@ -1,0 +1,20 @@
+[project]
+name = "oee-tracker"
+version = "0.1.0"
+description = "Track Overall Equipment Effectiveness across CNC machines and shifts"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "alembic",
+    "sqlalchemy",
+    "psycopg2-binary",
+    "python-dotenv",
+]
+
+[project.scripts]
+oee-tracker = "oee_tracker.cli:main"
+load-sample = "sample.load:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

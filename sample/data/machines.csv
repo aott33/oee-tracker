@@ -1,0 +1,6 @@
+id,name,ideal_cycle_time,location
+1,CNC-001,45,Bay A
+2,CNC-002,45,Bay A
+3,CNC-003,60,Bay B
+4,CNC-004,30,Bay B
+5,CNC-005,55,Bay C
