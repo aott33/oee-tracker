@@ -1,8 +1,13 @@
-# Production Line OEE Tracker
+# CNC Line OEE CLI Tool
 
 Track Overall Equipment Effectiveness across CNC machines and shifts.
 
 ![cli-screenshot](https://github.com/user-attachments/assets/351ef266-3db6-472f-a683-f11b34d6ba60)
+
+<details>
+    <summary>Click to view image gallery</summary>
+    <img src="https://github.com/user-attachments/assets/351ef266-3db6-472f-a683-f11b34d6ba60" alt="oee-help"/>
+</details>
 
 ## Prerequisites
 
