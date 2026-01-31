@@ -73,16 +73,60 @@ oee report shifts
 oee report downtime --limit 10
 ```
 
-## Database Tables
+## Database
 
-| Table | Columns |
-|-------|---------|
-| machines | id, name, ideal_cycle_time, location |
-| shifts | id, name |
-| operators | id, name |
-| reason_codes | code, description, is_planned |
-| production_runs | id, machine_id, shift_id, operator_id, planned_start_time, planned_end_time, actual_start_time, actual_end_time, good_parts_count, rejected_parts_count |
-| downtime_events | id, production_run_id, reason_code, start_time, end_time |
+```mermaid
+erDiagram
+    machines {
+        int id PK
+        string name
+        float ideal_cycle_time
+        string location
+    }
+
+    shifts {
+        int id PK
+        string name
+    }
+
+    operators {
+        int id PK
+        string name
+    }
+
+    reason_codes {
+        string code PK
+        string description
+        bool is_planned
+    }
+
+    production_runs {
+        int id PK
+        int machine_id FK
+        int shift_id FK
+        int operator_id FK
+        datetime planned_start_time
+        datetime planned_end_time
+        datetime actual_start_time
+        datetime actual_end_time
+        int good_parts_count
+        int rejected_parts_count
+    }
+
+    downtime_events {
+        int id PK
+        int production_run_id FK
+        string reason_code FK
+        datetime start_time
+        datetime end_time
+    }
+
+    machines ||--o{ production_runs : "has"
+    shifts ||--o{ production_runs : "has"
+    operators ||--o{ production_runs : "runs"
+    production_runs ||--o{ downtime_events : "has"
+    reason_codes ||--o{ downtime_events : "categorizes"
+```
 
 ## OEE Formula
 
