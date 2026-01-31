@@ -7,16 +7,13 @@ Track Overall Equipment Effectiveness across CNC machines and shifts.
 <details>
     <summary>More screenshots</summary>
 
-   **Machine List**
-   
+   Machine List
    <img src="assets/machine-list.png" alt="Machine List">
 
-   **OEE Report**
-   
+   OEE Report
    <img src="assets/report-oee.png" alt="OEE Report">
 
-   **Downtime Report**
-   
+   Downtime Report
    <img src="assets/downtime-report.png" alt="Downtime Report">
 </details>
 
