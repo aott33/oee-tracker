@@ -2,23 +2,23 @@
 
 Track Overall Equipment Effectiveness across CNC machines and shifts.
 
-<img src="assets/cli-help.png" alt="CLI Help" style="border-radius: 10px;">
+<img src="assets/cli-help.png" alt="CLI Help">
 
 <details>
     <summary>More screenshots</summary>
 
    <figure>
-        <img src="assets/machine-list.png" alt="Machine List" style="border-radius: 10px;">
+        <img src="assets/machine-list.png" alt="Machine List">
         <figcaption>Machine List</figcaption>
     </figure>
 
    <figure>
-        <img src="assets/report-oee.png" alt="OEE Report" style="border-radius: 10px;">
+        <img src="assets/report-oee.png" alt="OEE Report">
         <figcaption>OEE Report</figcaption>
     </figure>
 
    <figure>
-        <img src="assets/downtime-report.png" alt="Downtime Report" style="border-radius: 10px;">
+        <img src="assets/downtime-report.png" alt="Downtime Report">
         <figcaption>Downtime Report</figcaption>
     </figure>
 </details>
