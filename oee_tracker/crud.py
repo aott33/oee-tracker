@@ -705,8 +705,38 @@ def calculate_performance(
     Performance = (Ideal Cycle Time × Total Parts) / Run Time
     Returns None if run not found or incomplete.
     """
-    pass
+    production_run = get_production_run(session, run_id)
+    
+    if production_run is None:
+        return None
+    
+    # Need actual times to calculate run time
+    if production_run.actual_start_time is None or production_run.actual_end_time is None:
+        return None
+    
+    if production_run.good_parts_count is None or production_run.rejected_parts_count is None:
+        return None
+    
+    total_parts = production_run.good_parts_count + production_run.rejected_parts_count
 
+    actual_run_time = (production_run.actual_end_time - production_run.actual_start_time).total_seconds()
+    downtime_events = get_downtime_events_by_run(session, run_id)
+    total_downtime = 0
+    for event in downtime_events:
+        if event.start_time is not None and event.end_time is not None:
+            total_downtime += (event.end_time - event.start_time).total_seconds()
+    
+    run_time = actual_run_time - total_downtime
+
+    ideal_cycle_time = production_run.machine.ideal_cycle_time
+
+    # Need a value greater than 0
+    if ideal_cycle_time is None or ideal_cycle_time <= 0:
+        return None
+    
+    performance = (ideal_cycle_time * total_parts) / run_time
+
+    return performance
 
 def calculate_quality(
     session: Session,
@@ -717,7 +747,22 @@ def calculate_quality(
     Quality = Good Parts / Total Parts
     Returns None if run not found or incomplete.
     """
-    pass
+    production_run = get_production_run(session, run_id)
+    
+    if production_run is None:
+        return None
+    
+    if production_run.good_parts_count is None or production_run.rejected_parts_count is None:
+        return None
+    
+    total_parts = production_run.good_parts_count + production_run.rejected_parts_count
+
+    if total_parts == 0:
+        return None
+
+    quality = production_run.good_parts_count / total_parts
+
+    return quality
 
 
 def calculate_oee(
@@ -729,7 +774,29 @@ def calculate_oee(
     Returns dict with availability, performance, quality, and oee.
     Returns None if run not found or incomplete.
     """
-    pass
+    availability = calculate_availability(session, run_id)
+
+    if availability is None:
+        return None
+    
+    performance = calculate_performance(session, run_id)
+
+    if performance is None:
+        return None
+    
+    quality = calculate_quality(session, run_id)
+
+    if quality is None:
+        return None
+    
+    oee = availability * performance * quality
+
+    return {
+        "availability": availability,
+        "performance": performance,
+        "quality": quality,
+        "oee": oee
+    }
 
 
 def calculate_oee_by_machine(
@@ -739,8 +806,44 @@ def calculate_oee_by_machine(
     end_date: datetime | None = None,
 ) -> dict | None:
     """Calculate aggregate OEE for a machine over a date range."""
-    pass
+    production_runs = get_production_runs_by_machine(session, machine_id, start_date, end_date)
 
+    if not production_runs:
+        return None
+
+    availabilities = []
+    performances = []
+    qualities = []
+    oees = []
+
+    for run in production_runs:
+        result = calculate_oee(session, run.id)
+        if result is not None:
+            availabilities.append(result["availability"])
+            performances.append(result["performance"])
+            qualities.append(result["quality"])
+            oees.append(result["oee"])
+
+    # Then average them
+    avg_availability = sum(availabilities) / len(availabilities) if availabilities else None
+    avg_performance = sum(performances) / len(performances) if performances else None
+    avg_quality = sum(qualities) / len(qualities) if qualities else None
+    avg_oee = sum(oees) / len(oees) if oees else None
+
+    if avg_availability is None or avg_performance is None or avg_quality is None or avg_oee is None:
+        return None
+    
+    return {
+        "machine_id": machine_id,
+        "start_date": start_date,
+        "end_date": end_date,
+        "runs_included": len(availabilities),
+        "runs_total": len(production_runs),
+        "avg_availability": avg_availability,
+        "avg_performance": avg_performance,
+        "avg_quality": avg_quality,
+        "avg_oee": avg_oee
+    }
 
 def calculate_oee_by_shift(
     session: Session,
@@ -749,7 +852,44 @@ def calculate_oee_by_shift(
     end_date: datetime | None = None,
 ) -> dict | None:
     """Calculate aggregate OEE for a shift over a date range."""
-    pass
+    production_runs = get_production_runs_by_shift(session, shift_id, start_date, end_date)
+
+    if not production_runs:
+        return None
+
+    availabilities = []
+    performances = []
+    qualities = []
+    oees = []
+
+    for run in production_runs:
+        result = calculate_oee(session, run.id)
+        if result is not None:
+            availabilities.append(result["availability"])
+            performances.append(result["performance"])
+            qualities.append(result["quality"])
+            oees.append(result["oee"])
+
+    # Then average them
+    avg_availability = sum(availabilities) / len(availabilities) if availabilities else None
+    avg_performance = sum(performances) / len(performances) if performances else None
+    avg_quality = sum(qualities) / len(qualities) if qualities else None
+    avg_oee = sum(oees) / len(oees) if oees else None
+
+    if avg_availability is None or avg_performance is None or avg_quality is None or avg_oee is None:
+        return None
+    
+    return {
+        "shift_id": shift_id,
+        "start_date": start_date,
+        "end_date": end_date,
+        "runs_included": len(availabilities),
+        "runs_total": len(production_runs),
+        "avg_availability": avg_availability,
+        "avg_performance": avg_performance,
+        "avg_quality": avg_quality,
+        "avg_oee": avg_oee
+    }
 
 
 # ============================================================
@@ -766,8 +906,51 @@ def get_top_downtime_reasons(
     Get top downtime reasons by total duration.
     Returns list of dicts with reason_code, description, total_duration_minutes.
     """
-    pass
+    try:
+        total_duration = func.sum(
+            (func.julianday(DowntimeEvent.end_time) - func.julianday(DowntimeEvent.start_time)) * 24 * 60
+        ).label("total_duration_minutes")
 
+        statement = (
+            select(
+                DowntimeEvent.reason_code,
+                ReasonCode.description.label("description"),
+                total_duration
+            )
+            .join(ReasonCode)
+            .where(
+                DowntimeEvent.start_time != None,
+                DowntimeEvent.end_time != None
+            )
+            .group_by(DowntimeEvent.reason_code)
+            .order_by(total_duration.desc())
+            .limit(limit)
+        )
+
+        if start_date != None:
+            statement = statement.where(DowntimeEvent.start_time >= start_date)
+
+        if end_date != None:
+            statement = statement.where(DowntimeEvent.end_time <= end_date)
+
+        downtime_events = session.execute(statement)
+
+        downtime_events_list = []
+
+        for event in downtime_events:
+            downtime_dict = {
+                "reason_code": event.reason_code,
+                "description": event.description,
+                "total_duration_minutes": event.total_duration_minutes
+            }
+
+            downtime_events_list.append(downtime_dict)
+    
+        return downtime_events_list
+    
+    except SQLAlchemyError as e:
+        print(f"Database error: {e}")
+        return []
 
 def get_machines_ranked_by_oee(
     session: Session,
@@ -778,7 +961,25 @@ def get_machines_ranked_by_oee(
     Get machines ranked by OEE.
     Returns list of dicts with machine_id, name, oee.
     """
-    pass
+    try:
+        machines = get_all_machines(session)
+
+        machines_oee_list = []
+
+        for machine in machines:
+            machine_oee = calculate_oee_by_machine(session, machine.id, start_date, end_date)
+
+            if machine_oee is not None:
+                machines_oee_list.append(machine_oee)
+
+        machine_oee_sorted = sorted(machines_oee_list, key=lambda m: m["avg_oee"], reverse=True)
+
+        return machine_oee_sorted
+
+    except SQLAlchemyError as e:
+        print(f"Database error: {e}")
+        return []
+    
 
 
 def compare_shifts(
@@ -790,4 +991,21 @@ def compare_shifts(
     Compare shift performance.
     Returns list of dicts with shift_id, name, availability, performance, quality, oee.
     """
-    pass
+    try:
+        shifts = get_all_shifts(session)
+
+        shifts_oee_list = []
+
+        for shift in shifts:
+            shift_oee = calculate_oee_by_shift(session, shift.id, start_date, end_date)
+
+            if shift_oee is not None:
+                shifts_oee_list.append(shift_oee)
+
+        shifts_oee_sorted = sorted(shifts_oee_list, key=lambda s: s["avg_oee"], reverse=True)
+        
+        return shifts_oee_sorted
+    
+    except SQLAlchemyError as e:
+        print(f"Database error: {e}")
+        return []
