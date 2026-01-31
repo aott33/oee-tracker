@@ -5,7 +5,7 @@ from typing import Annotated
 import oee_tracker.crud as crud
 import oee_tracker.db as db
 
-app = typer.Typer()
+app = typer.Typer(help="Manage machines.")
 
 @app.command()
 def create(
