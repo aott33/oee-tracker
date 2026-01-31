@@ -905,8 +905,9 @@ def get_top_downtime_reasons(
     Returns list of dicts with reason_code, description, total_duration_minutes.
     """
     try:
+        # PostgreSQL: EXTRACT(EPOCH FROM ...) returns seconds, divide by 60 for minutes
         total_duration = func.sum(
-            (func.julianday(DowntimeEvent.end_time) - func.julianday(DowntimeEvent.start_time)) * 24 * 60
+            func.extract('epoch', DowntimeEvent.end_time - DowntimeEvent.start_time) / 60
         ).label("total_duration_minutes")
 
         statement = (
@@ -920,7 +921,7 @@ def get_top_downtime_reasons(
                 DowntimeEvent.start_time != None,
                 DowntimeEvent.end_time != None
             )
-            .group_by(DowntimeEvent.reason_code)
+            .group_by(DowntimeEvent.reason_code, ReasonCode.description)
             .order_by(total_duration.desc())
             .limit(limit)
         )
