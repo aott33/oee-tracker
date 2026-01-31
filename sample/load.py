@@ -10,6 +10,7 @@ Loads CSV files from sample/data/ into the database.
 import csv
 from datetime import datetime
 from pathlib import Path
+from sqlalchemy import text
 
 from oee_tracker.db import get_session
 from oee_tracker.models import Machine, Shift, Operator, ReasonCode, ProductionRun
@@ -98,6 +99,15 @@ def main():
         # Skipping downtime_events as requested
 
         session.commit()
+
+        # Reset sequences after loading sample data with explicit IDs
+        session.execute(text("SELECT setval('machines_id_seq', (SELECT MAX(id) FROM machines))"))
+        session.execute(text("SELECT setval('shifts_id_seq', (SELECT MAX(id) FROM shifts))"))
+        session.execute(text("SELECT setval('operators_id_seq', (SELECT MAX(id) FROM operators))"))
+        session.execute(text("SELECT setval('production_runs_id_seq', (SELECT MAX(id) FROM production_runs))"))
+        session.commit()
+        print("Reset ID sequences")
+
         print("Done!")
 
     except Exception as e:
