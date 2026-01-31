@@ -6,9 +6,9 @@ Track Overall Equipment Effectiveness across CNC machines and shifts.
 
 ```mermaid
 flowchart LR
-    CLI[CLI Commands] --> CRUD[Business Logic]
-    CRUD --> Models[ORM Models]
-    Models --> DB[(PostgreSQL)]
+    CLI["CLI (Typer)<br/>User commands"] --> CRUD["CRUD (crud.py)<br/>Business logic & OEE calculations"]
+    CRUD --> Models["Models (SQLAlchemy)<br/>Machine, Shift, ProductionRun, etc."]
+    Models --> DB[("PostgreSQL<br/>Data storage")]
 ```
 
 ## Setup
