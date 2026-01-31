@@ -11,8 +11,6 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import (
     IntegrityError,
     SQLAlchemyError,
-    OperationalError,
-    DataError,
 ) 
 
 from oee_tracker.models import (

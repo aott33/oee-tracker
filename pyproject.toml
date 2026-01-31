@@ -9,10 +9,11 @@ dependencies = [
     "sqlalchemy",
     "psycopg2-binary",
     "python-dotenv",
+    "typer>=0.21.1",
 ]
 
 [project.scripts]
-oee-tracker = "oee_tracker.cli:main"
+oee = "oee_tracker.cli:main"
 load-sample = "sample.load:main"
 
 [build-system]
