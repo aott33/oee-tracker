@@ -9,15 +9,6 @@ Track Overall Equipment Effectiveness across CNC machines and shifts.
 - [UV](https://docs.astral.sh/uv/getting-started/installation/) - Python package manager (installs Python automatically)
 - [Docker](https://www.docker.com/get-started/) - For running PostgreSQL
 
-## Architecture
-
-```mermaid
-flowchart LR
-    CLI["CLI (Typer)<br/>User commands"] --> CRUD["CRUD (crud.py)<br/>Business logic & OEE calculations"]
-    CRUD --> Models["Models (SQLAlchemy)<br/>Machine, Shift, ProductionRun, etc."]
-    Models --> DB[("PostgreSQL<br/>Data storage")]
-```
-
 ## Setup
 
 ```bash
@@ -93,6 +84,15 @@ oee report shift 1
 oee report machines
 oee report shifts
 oee report downtime --limit 10
+```
+
+## Architecture
+
+```mermaid
+flowchart LR
+    CLI["CLI (Typer)<br/>User commands"] --> CRUD["CRUD (crud.py)<br/>Business logic & OEE calculations"]
+    CRUD --> Models["Models (SQLAlchemy)<br/>Machine, Shift, ProductionRun, etc."]
+    Models --> DB[("PostgreSQL<br/>Data storage")]
 ```
 
 ## Database
