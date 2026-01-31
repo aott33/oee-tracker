@@ -128,3 +128,4 @@ oee-tracker --help
 | Create migration for is_admin column | `migrations/versions/` | `alembic revision` |
 | Implement is_admin check in delete_machine | `oee_tracker/crud.py` | `delete_machine` |
 | Move load-sample to subcommand pattern | `oee_tracker/cli/` | `data load` |
+| Add optional sort key parameter to list functions | `oee_tracker/crud.py` | `get_all_*` |

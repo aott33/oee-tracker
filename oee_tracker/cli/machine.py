@@ -44,8 +44,6 @@ def list():
     session = db.get_session()
 
     try:
-        print("CNC Machines")
-
         machines = crud.get_all_machines(session)
 
         if machines is None:
@@ -58,5 +56,78 @@ def list():
             elif machine.location is None:
                 print(f"{machine.id}: {machine.name} - {machine.ideal_cycle_time}s")
 
+    finally:
+        session.close()
+
+@app.command()
+def get(id: int):
+    """Get machine by id"""
+
+    session = db.get_session()
+
+    try:
+        machine = crud.get_machine(session, id)
+
+        if machine is None:
+            print(f"Error: Machine {id} not found")
+            raise typer.Exit(code=1)
+
+        if machine.location is not None:
+            print(f"{machine.name} - {machine.location} - {machine.ideal_cycle_time}s")
+        elif machine.location is None:
+            print(f"{machine.name} - {machine.ideal_cycle_time}s")
+
+    finally:
+        session.close()
+
+@app.command()
+def update(
+    machine_id: int,
+    name: Annotated[str, typer.Option(help="Update machine name")] = None,
+    time: Annotated[float, typer.Option(help="Update machine time")] = None,
+    loc: Annotated[str, typer.Option(help="Update machine location")] = None,
+):
+    """Update machine information"""
+    session = db.get_session()
+
+    try:
+        machine = crud.update_machine(
+            session,
+            machine_id,
+            name,
+            time,
+            loc
+        )
+
+        if machine is None:
+            raise typer.Exit(code=1)
+
+        if machine:
+            msg = f"Machine updated: {machine.name} - {machine.ideal_cycle_time}s"
+            if machine.location:
+                msg = f"Machine updated: {machine.name} - {machine.location} - {machine.ideal_cycle_time}s"
+        print(msg)
+    
+    finally:
+        session.close()
+
+@app.command()
+def delete(machine_id: int):
+    """Delete machine"""
+    session = db.get_session()
+
+    try:
+        deleted = crud.delete_machine(
+            session,
+            machine_id
+        )
+
+        msg = f"Machine {machine_id} not deleted"
+
+        if deleted:
+            msg = f"Machine {machine_id} deleted"
+
+        print(msg)
+    
     finally:
         session.close()
