@@ -13,7 +13,7 @@ from pathlib import Path
 from sqlalchemy import text
 
 from oee_tracker.db import get_session
-from oee_tracker.models import Machine, Shift, Operator, ReasonCode, ProductionRun
+from oee_tracker.models import Machine, Shift, Operator, ReasonCode, ProductionRun, DowntimeEvent
 
 SAMPLE_DATA_DIR = Path(__file__).parent / "data"
 
@@ -96,7 +96,17 @@ def main():
             session.add(production_run)
         print("Loaded production runs")
 
-        # Skipping downtime_events as requested
+        # Load downtime events
+        for row in load_csv("downtime_events.csv"):
+            downtime_event = DowntimeEvent(
+                id=int(row["id"]),
+                production_run_id=int(row["production_run_id"]),
+                reason_code=row["reason_code"],
+                start_time=parse_datetime(row["start_time"]),
+                end_time=parse_datetime(row["end_time"]),
+            )
+            session.add(downtime_event)
+        print("Loaded downtime events")
 
         session.commit()
 
@@ -105,6 +115,7 @@ def main():
         session.execute(text("SELECT setval('shifts_id_seq', (SELECT MAX(id) FROM shifts))"))
         session.execute(text("SELECT setval('operators_id_seq', (SELECT MAX(id) FROM operators))"))
         session.execute(text("SELECT setval('production_runs_id_seq', (SELECT MAX(id) FROM production_runs))"))
+        session.execute(text("SELECT setval('downtime_events_id_seq', (SELECT MAX(id) FROM downtime_events))"))
         session.commit()
         print("Reset ID sequences")
 

@@ -5,62 +5,10 @@ Track Overall Equipment Effectiveness across CNC machines and shifts.
 ## Architecture
 
 ```mermaid
-flowchart TD
-    subgraph Startup["1. Startup"]
-        A[uv sync] --> B[Install Dependencies]
-        B --> C[docker compose up -d]
-        C --> D[PostgreSQL Container Running]
-    end
-
-    subgraph Database["2. Database Setup"]
-        D --> E[db.py loads .env]
-        E --> F[create_engine connects to PostgreSQL]
-        F --> G[SessionLocal factory created]
-    end
-
-    subgraph Migrations["3. Migrations"]
-        G --> H[uv run alembic upgrade head]
-        H --> I[Alembic runs migration scripts]
-        I --> J[migrations/versions/*.py executed]
-        J --> K[Tables created in PostgreSQL]
-    end
-
-    subgraph SampleData["4. Load Sample Data"]
-        K --> L[uv run load-sample]
-        L --> M[sample/load.py executes]
-        M --> N[get_session from db.py]
-        N --> O[Read CSV files]
-        O --> P[Create model instances]
-        P --> Q[session.add + commit]
-        Q --> R[Data in PostgreSQL]
-    end
-
-    subgraph CLI["5. Run CLI"]
-        R --> S[uv run oee-tracker]
-        S --> T[cli.py main executes]
-        T --> U["CLI for OEE Tracker<br/>(Not yet implemented)"]
-    end
-
-    subgraph Models["models.py (ORM Layer)"]
-        Machine
-        Shift
-        Operator
-        ReasonCode
-        ProductionRun
-        DowntimeEvent
-    end
-
-    subgraph CRUD["crud.py (Business Logic)"]
-        CreateOps[Create Operations]
-        ReadOps[Read/Query Operations]
-        UpdateOps[Update Operations]
-        DeleteOps[Delete Operations]
-        OEECalc[OEE Calculations]
-    end
-
-    U -.->|will use| CRUD
-    CRUD --> Models
-    Models --> G
+flowchart LR
+    CLI[CLI Commands] --> CRUD[Business Logic]
+    CRUD --> Models[ORM Models]
+    Models --> DB[(PostgreSQL)]
 ```
 
 ## Setup
@@ -69,46 +17,72 @@ flowchart TD
 # 1. Install dependencies
 uv sync
 
-# 2. Start PostgreSQL (via Docker)
+# 2. Install CLI globally
+uv pip install -e .
+
+# 3. Start PostgreSQL (via Docker)
 docker compose up -d
 
-# 3. Run migrations
-uv run alembic upgrade head
+# 4. Run migrations
+alembic upgrade head
 
-# 4. Load sample data (optional)
-uv run load-sample
+# 5. Load sample data (optional)
+load-sample
 
-# 5. Start CLI
-uv run oee-tracker
+# 6. Use CLI
+oee --help
 ```
 
-## Database
-
-### Tables:
-
-Name: machines
-Columns: id, name, ideal_cycle_time, location
-
-Name: reason_codes
-Columns: code, is_planned, description
-
-Name: shifts
-Columns: id, name
-
-Name: operators
-Columns: id, name
-
-Name: production_runs
-Columns: id, machine_id, shift_id, operator_id, planned_start_time, planned_end_time, actual_start_time, actual_end_time, good_parts, rejected_parts
-
-Name: downtime_events
-Columns: id, production_run_id, reason_code, start_time, end_time
-
-## Usage
+## CLI Commands
 
 ```bash
-oee-tracker --help
+# Machines
+oee machine list
+oee machine create "CNC-001" 30.5 --loc "Bay A"
+oee machine get 1
+oee machine update 1 --name "CNC-001-Updated"
+oee machine delete 1
+
+# Shifts
+oee shift list
+oee shift create "Day Shift"
+
+# Operators
+oee operator list
+oee operator create "John Smith"
+
+# Production Runs
+oee run list
+oee run create 1 1 1 "2025-01-06 06:00:00" "2025-01-06 14:00:00"
+oee run start 1
+oee run stop 1 500 10
+oee run active
+
+# Downtime Events
+oee downtime create 1 SETUP
+oee downtime stop 1
+oee downtime list --run-id 1
+oee downtime active
+
+# Reports
+oee report oee 1
+oee report machine 1 --start 2025-01-06 --end 2025-01-10
+oee report shift 1
+oee report machines
+oee report shifts
+oee report downtime --limit 10
 ```
+
+## Database Tables
+
+| Table | Columns |
+|-------|---------|
+| machines | id, name, ideal_cycle_time, location |
+| shifts | id, name |
+| operators | id, name |
+| reason_codes | code, description, is_planned |
+| production_runs | id, machine_id, shift_id, operator_id, planned_start_time, planned_end_time, actual_start_time, actual_end_time, good_parts_count, rejected_parts_count |
+| downtime_events | id, production_run_id, reason_code, start_time, end_time |
 
 ## OEE Formula
 
