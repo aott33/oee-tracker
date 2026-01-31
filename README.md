@@ -2,6 +2,11 @@
 
 Track Overall Equipment Effectiveness across CNC machines and shifts.
 
+## Prerequisites
+
+- [UV](https://docs.astral.sh/uv/getting-started/installation/) - Python package manager (installs Python automatically)
+- [Docker](https://www.docker.com/get-started/) - For running PostgreSQL
+
 ## Architecture
 
 ```mermaid
@@ -17,20 +22,35 @@ flowchart LR
 # 1. Install dependencies
 uv sync
 
-# 2. Install CLI globally
-uv pip install -e .
-
-# 3. Start PostgreSQL (via Docker)
+# 2. Start PostgreSQL (via Docker)
 docker compose up -d
 
-# 4. Run migrations
-alembic upgrade head
+# 3. Run migrations
+uv run alembic upgrade head
 
-# 5. Load sample data (optional)
-load-sample
+# 4. Load sample data (optional)
+uv run load-sample
 
-# 6. Use CLI
-oee --help
+# 5. Use CLI
+uv run oee --help
+```
+
+**Alternative: Activate virtual environment for shorter commands**
+
+```powershell
+# Windows PowerShell
+.venv\Scripts\Activate.ps1
+
+# Then run commands without 'uv run' prefix
+oee machine list
+```
+
+```bash
+# Linux/macOS/WSL
+source .venv/bin/activate
+
+# Then run commands without 'uv run' prefix
+oee machine list
 ```
 
 ## CLI Commands
@@ -134,6 +154,49 @@ erDiagram
 - **Performance** = (Ideal Cycle Time × Total Parts) / Run Time
 - **Quality** = Good Parts / Total Parts
 - **OEE** = Availability × Performance × Quality
+
+## Troubleshooting
+
+### `uv sync` fails with "Access is denied" error
+
+This can happen if the `.venv` folder is locked by another process.
+
+**Fix:** Manually delete the `.venv` folder and `uv.lock` file, then run `uv sync` again.
+
+```powershell
+Remove-Item -Recurse -Force .venv
+Remove-Item uv.lock
+uv sync
+```
+
+### Commands like `oee`, `alembic`, `load-sample` not found
+
+The commands are installed in the virtual environment. Either:
+
+1. **Use `uv run` prefix:**
+   ```bash
+   uv run oee machine list
+   uv run alembic upgrade head
+   ```
+
+2. **Or activate the virtual environment first:**
+   ```powershell
+   # Windows PowerShell
+   .venv\Scripts\Activate.ps1
+   ```
+   ```bash
+   # Linux/macOS/WSL
+   source .venv/bin/activate
+   ```
+
+### WSL: "Failed to hardlink files" warning
+
+This warning appears when using UV on Windows filesystem from WSL. It's harmless - UV falls back to copying files.
+
+**To suppress the warning:**
+```bash
+export UV_LINK_MODE=copy
+```
 
 ## TODO
 
