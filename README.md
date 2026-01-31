@@ -2,7 +2,7 @@
 
 Track Overall Equipment Effectiveness across CNC machines and shifts.
 
-<alt="cli-screenshot" src="https://github.com/user-attachments/assets/351ef266-3db6-472f-a683-f11b34d6ba60" />
+![cli-screenshot](https://github.com/user-attachments/assets/351ef266-3db6-472f-a683-f11b34d6ba60)
 
 ## Prerequisites
 
